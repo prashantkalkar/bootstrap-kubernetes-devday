@@ -202,9 +202,144 @@ $ kubectl run nginx --image=nginx --restart=Never
 Error from server (Forbidden): pods "nginx" is forbidden: error looking up service account default/default: serviceaccount "default" not found
 ```
 
+Looking at service accounts
+```shell
+$ kubectl get sa
+No resources found in default namespace.
+```
+
 It's now failing for not having the serviceaccount 'default' in the default namespace. For the pod to be created we will need service account 'default' to be created. 
 
-Which k8s components actual create the service account 'default' in various namespaces.
+Which k8s components actual create the service account 'default' in various namespaces?
+
+### Setting up the controller manager
+
+The k8s controller manager is responsible for service account creation (it's responsible for a lot of other things as well). 
+Deploying the controller manager should auto create the service account for us.
+
+Looking at the kubeadm documentation the controller manager, the controller manager can be deployed as
+```shell
+$ sudo kubeadm init phase control-plane controller-manager --v=9 --config kubeadm-config.yaml
+...
+[control-plane] Creating static Pod manifest for "kube-controller-manager"
+...
+I0215 11:01:29.512056   16269 manifests.go:154] [control-plane] wrote static Pod manifest for component "kube-controller-manager" to "/etc/kubernetes/manifests/kube-controller-manager.yaml"
+```
+
+Let's look at if SA is created for us by the controller manager. 
+
+```shell
+$ kubectl get sa
+NAME      SECRETS   AGE
+default   0         2m26s
+```
+
+### (Detour) What else k8s controller manager do
+
+Controller manager is collection of many Controllers in kubernetes.
+
+Looking at controller manager documentation its consist of lot independent Controllers bundled as single deployable.
+
+https://kubernetes.io/docs/reference/command-line-tools-reference/kube-controller-manager/#:~:text=%2D%2D-,controllers%20strings,-Default%3A%20%22*%22
+
+We will come back to controllers later. 
+
+### Back to the pod 
+
+This should allow us to create the pod.
+
+```shell
+$ kubectl run nginx --image=nginx --restart=Never
+pod/nginx created
+```
+
+Yay!! the pod is now created. Let's look at the pod status. 
+ 
+```shell
+$ kubectl get pods
+NAME    READY   STATUS    RESTARTS   AGE
+nginx   0/1     Pending   0          26s
+```
+
+The pod is now created. But it remains in pending state. 
+
+### Lets look inside Etcd
+
+To connect to etcd we need etcdctl to get the access etcd server. 
+
+#### Install etcdctl 
+
+```shell
+$ curl -LO https://github.com/etcd-io/etcd/releases/download/v3.5.12/etcd-v3.5.12-linux-amd64.tar.gz
+$ tar -xvf etcd-v3.5.12-linux-amd64.tar.gz
+$ cd etcd-v3.5.12-linux-amd64
+$ ./etcdctl --help
+```
+This should make the etcdctl available on the node. 
+
+#### Getting values from the etcd cluster
+
+ETCDCTL_API=3 etcdctl --endpoints 127.0.0.1:2379 --cacert /etc/kubernetes/pki/etcd/ca.crt --cert /etc/kubernetes/pki/etcd/server.crt --key /etc/kubernetes/pki/etcd/server.key get / --prefix --keys-only
+
+### Solving the pending pod
+
+Looking at the pod, it not show any errors or any events at all. 
+
+```shell
+$ kubectl describe pod nginx
+Name:         nginx
+Namespace:    default
+Priority:     0
+Node:         <none>
+Labels:       run=nginx
+Annotations:  <none>
+Status:       Pending
+IP:
+IPs:          <none>
+Containers:
+  nginx:
+    Image:        nginx
+    Port:         <none>
+    Host Port:    <none>
+    Environment:  <none>
+    Mounts:
+      /var/run/secrets/kubernetes.io/serviceaccount from kube-api-access-69sz4 (ro)
+Volumes:
+  kube-api-access-69sz4:
+    Type:                    Projected (a volume that contains injected data from multiple sources)
+    TokenExpirationSeconds:  3607
+    ConfigMapName:           kube-root-ca.crt
+    ConfigMapOptional:       <nil>
+    DownwardAPI:             true
+QoS Class:                   BestEffort
+Node-Selectors:              <none>
+Tolerations:                 node.kubernetes.io/not-ready:NoExecute op=Exists for 300s
+                             node.kubernetes.io/unreachable:NoExecute op=Exists for 300s
+Events:                      <none>
+```
+No events or error means kubernetes it not even trying to run this pod.
+
+Looking at the node attribute, it's not populated. So not even a node is allocated to the pod.
+
+Which component assigns pod to a node?
+
+It's the job for kubernetes scheduler. 
+
+### Setup Kubernetes scheduler
+
+Install scheduler with kubeadm command
+
+```shell
+$ sudo kubeadm init phase control-plane scheduler --v=9 --config kubeadm-config.yaml
+```
+
+### Network Not ready 
+
+
+
+### Kubernetes controller
+
+
 
 
 
