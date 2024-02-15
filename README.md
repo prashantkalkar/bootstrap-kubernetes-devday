@@ -56,7 +56,7 @@ Verify the plan. Once done, apply the changes.
 terraform apply tfplan
 ```
 The terraform output should provide the details of how to ssh into the instance. In case the private file name is incorrect please correct it. 
-The ssh command will look something like this: `ssh ubuntu@65.0.93.158 -i ~/.ssh/id_rsa` (change the private key file if required)
+The ssh command will look something like this: `ssh ubuntu@<publicNodeIP> -i ~/.ssh/id_rsa` (change the private key file if required)
 
 ### What are we trying to do
 
