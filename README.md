@@ -279,7 +279,7 @@ This should make the etcdctl available on the node.
 
 #### Getting values from the etcd cluster
 
-ETCDCTL_API=3 etcdctl --endpoints 127.0.0.1:2379 --cacert /etc/kubernetes/pki/etcd/ca.crt --cert /etc/kubernetes/pki/etcd/server.crt --key /etc/kubernetes/pki/etcd/server.key get / --prefix --keys-only
+ETCDCTL_API=3 etcdctl --endpoints 10.0.139.27:2379 --cacert /etc/kubernetes/pki/etcd/ca.crt --cert /etc/kubernetes/pki/etcd/server.crt --key /etc/kubernetes/pki/etcd/server.key get / --prefix --keys-only
 
 ### Solving the pending pod
 
@@ -335,7 +335,14 @@ $ sudo kubeadm init phase control-plane scheduler --v=9 --config kubeadm-config.
 
 ### Network Not ready 
 
+Install calico
 
+```shell
+kubectl create -f https://raw.githubusercontent.com/projectcalico/calico/v3.27.0/manifests/tigera-operator.yaml
+
+
+sudo kubeadm init phase addon kube-proxy --v=9 --config kubeadm-config.yaml
+```
 
 ### Kubernetes controller
 
