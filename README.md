@@ -36,11 +36,11 @@ for CRI and also provide the podCidr range.
 
 Ensure you are pointing to correct AWS account. 
 
-Create `terraform.tfvars` in k8s_node directory with following variables, provide appropriate values
+Create `terraform.auto.tfvars` in k8s_node directory with following variables, provide appropriate values
 ```
 person_name="<name>"
 public_subnet_id="<instance_subnet>"
-vpc_name="<instance_vpc>"
+vpc_name="<instance_vpc_name>"
 ```
 You can also provide value for `keypair_pub_file` is not using the default value of `~/.ssh/id_rsa.pub`
 

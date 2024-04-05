@@ -1,5 +1,5 @@
 terraform {
-  required_version = "1.7.3"
+  required_version = "1.7.5"
   required_providers {
     aws = {
       source = "hashicorp/aws"
@@ -12,14 +12,18 @@ terraform {
   }
 }
 
+locals {
+  default_tags = {
+    Owner = var.person_name
+    Project = "Devday"
+  }
+}
+
 provider "aws" {
   region = "ap-south-1"
 
   default_tags {
-    tags = {
-      Owner = var.person_name
-      Project = "Devday"
-    }
+    tags = local.default_tags
   }
 }
 
@@ -75,6 +79,10 @@ resource "aws_instance" "k8s_node" {
   tags = {
     Name = "k8s_node_devday_${var.person_name}"
   }
+
+  volume_tags = merge(local.default_tags, {
+    Name = "k8s_node_devday_${var.person_name}"}
+  )
 
   #force instance recreate on user data change
   user_data = <<-EOF
