@@ -138,3 +138,8 @@ sudo kubeadm init phase kubelet-start --v=5 --config kubeadm-config.yaml
 
 sudo kubeadm init phase kubelet-finalize all --v=5 --config kubeadm-config.yaml
 
+# required to be created for tigera operator and calico pods
+sudo mkdir -p /var/lib/calico
+sudo mkdir -p /var/run/calico
+
+
